@@ -1,0 +1,38 @@
+version: '1.0'
+
+stages:
+  - test
+
+steps:
+
+  CodeServerDockerImage:
+    title: Building CodeServer Docker Image
+    type: build
+    image_name: ilancodefresh/codeserver
+    working_directory: ./
+    tag: '${{CF_BRANCH_TAG_NORMALIZED}}'
+    dockerfile: Dockerfile
+
+  PushToDH:
+    type: push
+    title: Push Image to Docker Hub
+    description: Push Docker Image to Docker Hub Registry
+    candidate: ${{CodeServerDockerImage}}
+    #tag: temp
+    #image_name: codefresh/ilancs
+    registry: dockerhub
+    fail_fast: false
+    when:
+      branch:
+        only:
+          - master
+    retry:
+      maxAttempts: 2
+      delay: 5
+
+  Run:
+    type: launch-composition
+    title: Run CodeServer
+    description: ilan-codefresh/code-server
+    working_directory: ./
+    composition: docker-compose.yml
